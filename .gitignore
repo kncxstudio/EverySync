@@ -17,4 +17,5 @@
 # Files Ignored
 Gopkg.lock
 Gopkg.toml
+EverySync.code-workspace
 
