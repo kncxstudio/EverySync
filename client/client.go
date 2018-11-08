@@ -6,13 +6,22 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xtaci/kcp-go"
 	"log"
+	"net"
+	"time"
 )
 
-const ServerAddr = "149.28.59.218:13301"
+// const ServerIP = "149.28.59.218"
+const ServerIP = "127.0.0.1"
+const ServerPort  = 13301
 func main(){
-	clientSess, err := kcp.DialWithOptions(ServerAddr, nil, 10, 3)
+
+	srcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 9983} // 注意端口必须固定
+	dstAddr := &net.UDPAddr{IP: net.ParseIP(ServerIP), Port: ServerPort}
+	conn, err := net.DialUDP("udp", srcAddr, dstAddr)
+	clientSess, err := kcp.NewConn(dstAddr.String(),nil,10,3,conn)
+
 	CheckErr(err)
-	log.Println("Client connected to ", ServerAddr)
+	log.Println("Client connected to ", dstAddr.String())
 
 
 	client := &pb.Client{
@@ -32,10 +41,25 @@ func main(){
 	CheckErr(unmarshalErr)
 
 	log.Println(otherClient)
-	//for {
-	//	_, err := clientSess.Write([]byte("clientSess says hello!"))
-	//	CheckErr(err)
-	//	log.Println("client write success!")
-	//	time.Sleep(1 * time.Second)
-	//}
+
+
+	sess, err := kcp.DialWithOptions(otherClient.Addr, nil, 10, 3)
+	sess.Write([]byte("dig msg"))
+	go ReadFromSession(sess)
+
+	for {
+		sess.Write([]byte("data msg"))
+		time.Sleep(2 * time.Second)
+	}
+}
+
+
+func ReadFromSession(session net.Conn){
+	data := make([]byte,1024)
+
+	for {
+		n, readErr := session.Read(data)
+		CheckErr(readErr)
+		log.Println(string(data[:n]))
+	}
 }

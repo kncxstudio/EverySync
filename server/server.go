@@ -13,18 +13,26 @@ import (
 
 var clientsCache = cache.New(5 * time.Minute, 10 * time.Minute)
 var addrsCache = cache.New(5 * time.Minute, 10 * time.Minute)
+var addrsList []string
+const ListenPort = 13301
 
+// var sessions = make([]*net.Conn,0)
 func main(){
-	server, err := kcp.ListenWithOptions(":13301", nil, 10, 3)
+
+	laddr := &net.UDPAddr{IP:net.IPv4zero, Port: ListenPort}
+	//raddr := &net.UDPAddr{IP:net.ParseIP("127.0.0.1"), Port: 9983}
+	conn, err := net.ListenUDP("udp", laddr)
+	server, err := kcp.ServeConn(nil,10,3, conn)
 	CheckErr(err)
 	for {
 		sess, err := server.Accept()
 		CheckErr(err)
+		log.Println(sess.RemoteAddr().String(), " connected!")
 		go AddSessToCache(sess)
 	}
 }
 
-// AddSessToCache
+// AddSessToCache add session to cache
 func AddSessToCache(sess net.Conn){
 	clientInfo := make([]byte,1024)
 	n, _ := sess.Read(clientInfo)
@@ -38,7 +46,6 @@ func AddSessToCache(sess net.Conn){
 
 	temp, _ := addrsCache.Get(id)
 
-	var addrsList []string
 	if temp == nil {
 		addrsList = make([]string, 0)
 	}else {
@@ -52,10 +59,17 @@ func AddSessToCache(sess net.Conn){
 		log.Println("addr : ", addr)
 	}
 
-	if len(addrsList) > 1 {
-		log.Println("len : ", len(addrsList))
-		go SendPeers(sess, id)
+
+
+	for {
+		if len(addrsList) > 1 {
+			log.Println("len : ", len(addrsList))
+			go SendPeers(sess, id)
+			break
+		}
+		time.Sleep(1 * time.Second)
 	}
+
 }
 
 
