@@ -8,7 +8,7 @@ import (
 )
 
 func main(){
-	server, err := kcp.ListenWithOptions(":10031", nil, 10, 3)
+	server, err := kcp.ListenWithOptions(":13301", nil, 10, 3)
 	CheckErr(err)
 	for {
 		client, err := server.Accept()

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const ServerAddr = "localhost:10031"
+const ServerAddr = "localhost:13301"
 func main(){
 	clientSess, err := kcp.DialWithOptions(ServerAddr, nil, 10, 3)
 	CheckErr(err)
