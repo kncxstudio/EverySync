@@ -13,9 +13,10 @@
 
 # Directories Ignored
 .vscode
+.idea
+vendor
 
 # Files Ignored
 Gopkg.lock
 Gopkg.toml
 EverySync.code-workspace
-
