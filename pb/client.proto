@@ -1,0 +1,7 @@
+syntax = "proto3";
+package pb;
+
+message Client{
+    string ID = 1;
+    string addr = 2;
+}
