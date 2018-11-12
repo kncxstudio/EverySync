@@ -1,34 +1,42 @@
 package main
 
 import (
-	"EverySync/pb"
 	. "EverySync/util"
 	"github.com/golang/protobuf/proto"
 	"github.com/xtaci/kcp-go"
 	"log"
 	"net"
 	"time"
+	"EverySync/pb"
 )
 
 // const ServerIP = "149.28.59.218"
-const ServerIP = "127.0.0.1"
+const ServerIP = "192.168.1.4"
 const ServerPort  = 13301
 func main(){
 
-	srcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: 9983} // 注意端口必须固定
 	dstAddr := &net.UDPAddr{IP: net.ParseIP(ServerIP), Port: ServerPort}
+	srcAddr := &net.UDPAddr{IP: net.ParseIP(ServerIP), Port: 1223} // 注意端口必须固定
 	conn, err := net.DialUDP("udp", srcAddr, dstAddr)
-	clientSess, err := kcp.NewConn(dstAddr.String(),nil,10,3,conn)
+	clientSess, err := kcp.NewConn(dstAddr.String(),nil,0,0,conn)
+
+	//clientSess, err := kcp.DialWithOptions(dstAddr.String(),nil,0,0)
 
 	CheckErr(err)
+	log.Println("local addr : ", clientSess.LocalAddr().String())
 	log.Println("Client connected to ", dstAddr.String())
 
+
+	for {
+		clientSess.Write([]byte("1111111111111111"))
+		time.Sleep(1 * time.Second)
+		log.Println("write success")
+	}
 
 	client := &pb.Client{
 		ID: "asdadawfgd",
 		Addr: "",
 	}
-
 	data, _ := proto.Marshal(client)
 	clientSess.Write(data)
 

@@ -19,10 +19,11 @@ const ListenPort = 13301
 // var sessions = make([]*net.Conn,0)
 func main(){
 
-	laddr := &net.UDPAddr{IP:net.IPv4zero, Port: ListenPort}
+	laddr := &net.UDPAddr{IP:net.ParseIP("192.168.1.4"), Port: ListenPort}
 	//raddr := &net.UDPAddr{IP:net.ParseIP("127.0.0.1"), Port: 9983}
+	log.Println(laddr.String())
 	conn, err := net.ListenUDP("udp", laddr)
-	server, err := kcp.ServeConn(nil,10,3, conn)
+	server, err := kcp.ServeConn(nil,0,0,conn)
 	CheckErr(err)
 	for {
 		sess, err := server.Accept()
