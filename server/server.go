@@ -15,11 +15,12 @@ var clientsCache = cache.New(5 * time.Minute, 10 * time.Minute)
 var addrsCache = cache.New(5 * time.Minute, 10 * time.Minute)
 var addrsList []string
 const ListenPort = 13301
+const ServerIP = "127.0.0.1"
 
 // var sessions = make([]*net.Conn,0)
 func main(){
 
-	laddr := &net.UDPAddr{IP:net.ParseIP("192.168.1.4"), Port: ListenPort}
+	laddr := &net.UDPAddr{IP:net.ParseIP(ServerIP), Port: ListenPort}
 	//raddr := &net.UDPAddr{IP:net.ParseIP("127.0.0.1"), Port: 9983}
 	log.Println(laddr.String())
 	conn, err := net.ListenUDP("udp", laddr)
@@ -28,7 +29,6 @@ func main(){
 	for {
 		sess, err := server.Accept()
 		CheckErr(err)
-		log.Println(sess.RemoteAddr().String(), " connected!")
 		go AddSessToCache(sess)
 	}
 }

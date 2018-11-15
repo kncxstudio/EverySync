@@ -11,53 +11,52 @@ import (
 )
 
 // const ServerIP = "149.28.59.218"
-const ServerIP = "192.168.1.4"
+const ServerIP = "127.0.0.1"
 const ServerPort  = 13301
+const LocalPort = 1223
 func main(){
 
 	dstAddr := &net.UDPAddr{IP: net.ParseIP(ServerIP), Port: ServerPort}
-	srcAddr := &net.UDPAddr{IP: net.ParseIP(ServerIP), Port: 1223} // 注意端口必须固定
-	conn, err := net.DialUDP("udp", srcAddr, dstAddr)
-	clientSess, err := kcp.NewConn(dstAddr.String(),nil,0,0,conn)
+	srcAddr := &net.UDPAddr{IP: net.IPv4zero, Port: LocalPort} // 注意端口必须固定
+	//conn, err := net.DialUDP("udp", srcAddr, dstAddr)
 
-	//clientSess, err := kcp.DialWithOptions(dstAddr.String(),nil,0,0)
-
+	//conn, err := kcp.DialWithOptions(dstAddr.String(),nil,0,0)
+	udpConn, err := net.ListenUDP("udp", srcAddr)
+	conn, err := kcp.NewConn(dstAddr.String(),nil,0,0,udpConn)
 	CheckErr(err)
-	log.Println("local addr : ", clientSess.LocalAddr().String())
 	log.Println("Client connected to ", dstAddr.String())
-
-
-	for {
-		clientSess.Write([]byte("1111111111111111"))
-		time.Sleep(1 * time.Second)
-		log.Println("write success")
-	}
 
 	client := &pb.Client{
 		ID: "asdadawfgd",
 		Addr: "",
 	}
 	data, _ := proto.Marshal(client)
-	clientSess.Write(data)
+	conn.Write(data)
 
 
 	data = make([]byte, 1024)
-	n, err := clientSess.Read(data)
+	n, err := conn.Read(data)
 	CheckErr(err)
+	conn.Close()
+
+
+
 	otherClient := &pb.Client{}
 	unmarshalErr := proto.Unmarshal(data[:n], otherClient)
 	CheckErr(unmarshalErr)
-
 	log.Println(otherClient)
-
-
-	sess, err := kcp.DialWithOptions(otherClient.Addr, nil, 10, 3)
+	rAddr, err := net.ResolveUDPAddr("udp", otherClient.Addr)
+	CheckErr(err)
+	udpConn, listenErr := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: LocalPort})
+	CheckErr(listenErr)
+	sess, err := kcp.NewConn(rAddr.String(), nil, 0, 0,udpConn)
 	sess.Write([]byte("dig msg"))
 	go ReadFromSession(sess)
 
 	for {
 		sess.Write([]byte("data msg"))
 		time.Sleep(2 * time.Second)
+		log.Println(sess.LocalAddr(), " writes msg")
 	}
 }
 
